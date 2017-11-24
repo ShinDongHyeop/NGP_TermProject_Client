@@ -4,9 +4,13 @@
 #include <time.h>
 #include "Randerer.h"
 #include "Map.h"
+#include "Buffer.h"
+#include "Player.h"
 
 using namespace std;
 
+#define MAX_PLAYER		3
+#define PB_SIZE			(sizeof(PlayerBuf) * MAX_PLAYER)
 
 enum KeyboardState{KEYBOARD_A, KEYBOARD_S, KEYBOARD_D, KEYBOARD_W, KEYBOARD_R};
 enum GameState{LOGIN, RUNNING, END};
@@ -26,8 +30,14 @@ bool collision(Object1 object1, Object2 object2) {
 
 class SceneMgr {
 	Randerer* randerer = NULL;
+	Player* m_Player = NULL;
+	int m_Player_Code;
 	Map* map = NULL;
 	SOCKET server_sock;
+	vector<Player*> o_Players;
+	PlayerBuf playersBuf[3];
+	ClientBuf cb;
+	int mMoveState[2]{};
 	int retval;
 	int game_State = LOGIN;
 	int player_State = WAIT;
@@ -42,6 +52,20 @@ public:
 
 	void keyboardFunc(int key, int state);
 
+	void mouseMotion(int x, int y) {
+		if (m_Player != NULL)
+			m_Player->setMyLookXY(x, y);
+	}
+
+	void initPlayersData();
+	void changeMove(int key, int state);
+	void setClientBuf() {
+		int* state = m_Player->getMoveState();
+		cb.move_State[0] = state[0];
+		cb.move_State[1] = state[1];
+	}
+	void setPlayers();
+
 	void err_quit(char *msg)
 	{
 		LPVOID lpMsgBuf;
@@ -55,7 +79,6 @@ public:
 		exit(1);
 	}
 
-	// 소켓 함수 오류 출력
 	void err_display(char *msg)
 	{
 		LPVOID lpMsgBuf;
@@ -66,5 +89,24 @@ public:
 			(LPTSTR)&lpMsgBuf, 0, NULL);
 		printf("[%s] %s", msg, (char *)lpMsgBuf);
 		LocalFree(lpMsgBuf);
+	}
+
+	int recvn(SOCKET s, char *buf, int len, int flags)
+	{
+		int received;
+		char *ptr = buf;
+		int left = len;
+
+		while (left > 0) {
+			received = recv(s, ptr, left, flags);
+			if (received == SOCKET_ERROR)
+				return SOCKET_ERROR;
+			else if (received == 0)
+				break;
+			left -= received;
+			ptr += received;
+		}
+
+		return (len - left);
 	}
 };
