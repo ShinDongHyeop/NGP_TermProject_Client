@@ -30,13 +30,26 @@ void SceneMgr::draw() {
 			randerer->printtext(220, 250, "READY");
 	}
 	if (game_State == RUNNING) {
-		if (m_Player != NULL)
+		if (m_Player != NULL) {
 			randerer->drawPlayer(m_Player->getDrawX(), m_Player->getDrawY(), 1, 1, 1);
+			randerer->drawBulletWay(
+				m_Player->getDrawX(), m_Player->getDrawY(),
+				m_Player->getLookX(), m_Player->getLookY()
+			);
+		}
 
 		if (o_Players.size() > 0) {
 			for (int i = 0; i < MAX_PLAYER - 1; ++i) {
 				randerer->drawPlayer(o_Players[i]->getDrawX(), o_Players[i]->getDrawY(), 1, 1, 1);
+				randerer->drawBulletWay(
+					o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
+					o_Players[i]->getLookX(), o_Players[i]->getLookY()
+				);
 			}
+		}
+		for (auto b : bullets) {
+			printf("%.5f\t%.5f\n", b->getDrawX(), b->getDrawY());
+			randerer->drawBullet(b->getDrawX(), b->getDrawY());
 		}
 	}
 }
@@ -88,7 +101,19 @@ void SceneMgr::update(int frame_time) {
 			err_display("recv()");
 			break;
 		}
+		retval = recvn(server_sock, (char*)&bullet_count, sizeof(int), 0);
+		if (retval == SOCKET_ERROR) {
+			err_display("recv()");
+			break;
+		}
+		retval = recvn(server_sock, (char*)&bulletsBuf, sizeof(BulletBuf)*bullet_count, 0);
+		if (retval == SOCKET_ERROR) {
+			err_display("recv()");
+			break;
+		}
+
 		setPlayers();
+		setBullets();
 		break;
 	case END:
 		break;
@@ -110,15 +135,14 @@ void SceneMgr::initPlayersData() {
 		playersBuf[m_Player_Code].hp
 	);
 	map->setXY(m_Player->getRealX(), m_Player->getRealY());
-	for (int i = 0; i < MAX_PLAYER; ++i) {
-		if (i == m_Player_Code)
-			++i;
+	for (int i = 1; i < MAX_PLAYER; ++i) {
 		o_Players.push_back(
 			new Player(
-				m_Player->getRealX(), m_Player->getRealY(),
-				playersBuf[i].real_X, playersBuf[i].real_Y,
-				playersBuf[i].hp
-			));
+				playersBuf[m_Player_Code].real_X, playersBuf[m_Player_Code].real_Y,
+				playersBuf[(m_Player_Code + i)%3].real_X, playersBuf[(m_Player_Code+i)%3].real_Y,
+				playersBuf[(m_Player_Code+ i)%3].hp
+			)
+		);
 	}
 }
 
@@ -173,8 +197,37 @@ void SceneMgr::changeMove(int key, int state) {
 void SceneMgr::setPlayers() {
 	m_Player->update(
 		playersBuf[m_Player_Code].real_X, playersBuf[m_Player_Code].real_Y,
+		playersBuf[m_Player_Code].look_X, playersBuf[m_Player_Code].look_Y,
 		playersBuf[m_Player_Code].hp
 	);
+
 	map->setXY(m_Player->getRealX(), m_Player->getRealY());
-	printf("%.5f\t%.5f\n", map->getX(), map->getY());
+
+	for (int i = 1;i < MAX_PLAYER; ++i) {
+		o_Players[i-1]->o_Update(
+			playersBuf[m_Player_Code].real_X, playersBuf[m_Player_Code].real_Y,
+			playersBuf[(m_Player_Code + i) % 3].real_X, playersBuf[(m_Player_Code + i) % 3].real_Y,
+			playersBuf[(m_Player_Code + i) % 3].look_X, playersBuf[(m_Player_Code + i) % 3].look_Y,
+			playersBuf[(m_Player_Code + i) % 3].hp
+		);
+	}
+}
+
+void SceneMgr::setBullets() {
+	bullets.clear();
+	for (int i = 0; i < bullet_count; ++i) {
+		bullets.push_back(
+			new Bullet(
+				map->getX(), map->getY(),
+				bulletsBuf[i].real_X, bulletsBuf[i].real_Y
+			));
+	}
+}
+
+void SceneMgr::shootBullet() {
+	m_Player->shootBullet();
+}
+
+void SceneMgr::stopBullet() {
+	m_Player->stopBullet();
 }

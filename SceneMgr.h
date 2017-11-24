@@ -6,10 +6,12 @@
 #include "Map.h"
 #include "Buffer.h"
 #include "Player.h"
+#include "Bullet.h"
 
 using namespace std;
 
 #define MAX_PLAYER		3
+#define MAX_BULLET		100
 #define PB_SIZE			(sizeof(PlayerBuf) * MAX_PLAYER)
 
 enum KeyboardState{KEYBOARD_A, KEYBOARD_S, KEYBOARD_D, KEYBOARD_W, KEYBOARD_R};
@@ -35,9 +37,12 @@ class SceneMgr {
 	Map* map = NULL;
 	SOCKET server_sock;
 	vector<Player*> o_Players;
+	vector<Bullet*> bullets;
 	PlayerBuf playersBuf[3];
+	BulletBuf bulletsBuf[MAX_BULLET];
 	ClientBuf cb;
 	int mMoveState[2]{};
+	int bullet_count;
 	int retval;
 	int game_State = LOGIN;
 	int player_State = WAIT;
@@ -59,12 +64,21 @@ public:
 
 	void initPlayersData();
 	void changeMove(int key, int state);
+
 	void setClientBuf() {
 		int* state = m_Player->getMoveState();
 		cb.move_State[0] = state[0];
 		cb.move_State[1] = state[1];
+		cb.shoot_State = m_Player->getShootState();
+		cb.look_X = m_Player->getLookX();
+		cb.look_Y = m_Player->getLookY();
 	}
+
 	void setPlayers();
+	void setBullets();
+
+	void shootBullet();
+	void stopBullet();
 
 	void err_quit(char *msg)
 	{
