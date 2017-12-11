@@ -154,7 +154,16 @@ void SceneMgr::draw() {
 				randerer->drawBullet(b->getDrawX(), b->getDrawY());
 			}
 			int dec, sign;
-			randerer->printtext(250, 250, fcvt(respawn_time, 0, &dec, &sign));
+			randerer->printtext(25, 250, fcvt(respawn_time, 0, &dec, &sign));
+		}
+	}
+	if (killdeath_State) {
+		if (m_Player != NULL) {
+			char s[10];
+			randerer->printtext(350, 430, "Kill     : ");
+			randerer->printtext(350, 400, "Death : ");
+			randerer->printtext(450, 430, itoa(m_Player->getKill(), s, 10));
+			randerer->printtext(450, 400, itoa(m_Player->getDeath(), s, 10));
 		}
 	}
 }
@@ -315,6 +324,12 @@ void SceneMgr::keyboardFunc(int key, int state) {
 				player_State = WAIT;
 		}
 	}
+	if (key == KEYBOARD_F) {
+		if (state == 1)
+			killdeath_State = true;
+		else
+			killdeath_State = false;
+	}
 }
 
 void SceneMgr::initPlayersData() {
@@ -390,7 +405,10 @@ void SceneMgr::setPlayers() {
 		playersBuf[m_Player_Code].look_X, playersBuf[m_Player_Code].look_Y,
 		playersBuf[m_Player_Code].hp
 	);
-
+	m_Player->setKD(
+		playersBuf[m_Player_Code].kill, 
+		playersBuf[m_Player_Code].death
+	);
 	map->setXY(m_Player->getRealX(), m_Player->getRealY());
 
 	for (int i = 1;i < MAX_PLAYER; ++i) {
@@ -399,6 +417,10 @@ void SceneMgr::setPlayers() {
 			playersBuf[(m_Player_Code + i) % 3].real_X, playersBuf[(m_Player_Code + i) % 3].real_Y,
 			playersBuf[(m_Player_Code + i) % 3].look_X, playersBuf[(m_Player_Code + i) % 3].look_Y,
 			playersBuf[(m_Player_Code + i) % 3].hp
+		);
+		o_Players[i - 1]->setKD(
+			playersBuf[(m_Player_Code + i) % 3].kill,
+			playersBuf[(m_Player_Code + i) % 3].death
 		);
 	}
 }

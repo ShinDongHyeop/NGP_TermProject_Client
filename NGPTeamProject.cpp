@@ -109,6 +109,8 @@ void Keyboard(unsigned char key, int x, int y) {
 		exit(1);
 	if (key == 'r')
 		s->keyboardFunc(KEYBOARD_R, 1);
+	if (key == 'f')
+		s->keyboardFunc(KEYBOARD_F, 1);
 	if (key == 'w')
 		s->changeMove(KEYBOARD_W, 1);
 	if (key == 'a')
@@ -120,6 +122,8 @@ void Keyboard(unsigned char key, int x, int y) {
 }
 
 void Keyboardup(unsigned char key, int x, int y) {
+	if (key == 'f')
+		s->keyboardFunc(KEYBOARD_F, -1);
 	if (key == 'w')
 		s->changeMove(KEYBOARD_W, -1);
 	if (key == 'a')

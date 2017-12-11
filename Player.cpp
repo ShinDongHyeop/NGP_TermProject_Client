@@ -9,6 +9,7 @@ Player::Player(float realX, float realY, float hp) {
 	draw_Y = setXY(realY);
 	look_X = 0;			look_Y = 1;
 	shoot_State = NO_SHOOT;
+	kill = 0;		death = 0;
 }
 
 Player::Player(float m_realX, float m_realY, float realX, float realY, float hp) {
@@ -19,6 +20,7 @@ Player::Player(float m_realX, float m_realY, float realX, float realY, float hp)
 	look_X = 0;			look_Y = 1;
 	draw_X = realX - drawX;
 	draw_Y = realY - drawY;
+	kill = 0;		death = 0;
 }
 
 float Player::setXY(float realXY) {

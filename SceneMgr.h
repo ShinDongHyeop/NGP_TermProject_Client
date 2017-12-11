@@ -14,10 +14,10 @@ using namespace std;
 #define MAX_BULLET		100
 #define PB_SIZE			(sizeof(PlayerBuf) * MAX_PLAYER)
 
-enum KeyboardState{KEYBOARD_A, KEYBOARD_S, KEYBOARD_D, KEYBOARD_W, KEYBOARD_R};
+enum KeyboardState{KEYBOARD_A, KEYBOARD_S, KEYBOARD_D, KEYBOARD_W, KEYBOARD_R, KEYBOARD_F};
 enum GameState{LOGIN, RUNNING, END};
 enum PlayerState{WAIT, READY, START, PLAY, DIE, RESPAWN};
-
+enum KDState{ON, OFF};
 
 template<class Object1, class Object2>
 bool collision(Object1 object1, Object2 object2) {
@@ -47,6 +47,7 @@ class SceneMgr {
 	int game_State = LOGIN;
 	int player_State = WAIT;
 	float start_time, respawn_time;
+	bool killdeath_State = false;
 public:
 	SceneMgr(LPVOID sock);
 
