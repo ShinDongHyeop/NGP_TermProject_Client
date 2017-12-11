@@ -9,6 +9,7 @@ SceneMgr::SceneMgr(LPVOID sock) {
 	if (retval == SOCKET_ERROR) {
 		err_display("recv()");
 	}
+	m_Player = NULL;
 }
 
 SceneMgr::~SceneMgr() {
@@ -31,24 +32,37 @@ void SceneMgr::draw() {
 	}
 	if (game_State == RUNNING) {
 		if (m_Player != NULL) {
-			randerer->drawPlayer(m_Player->getDrawX(), m_Player->getDrawY(), 1, 1, 1);
+			randerer->drawPlayer(
+				m_Player->getDrawX(), m_Player->getDrawY(),
+				1, 1, 1
+			);
 			randerer->drawBulletWay(
 				m_Player->getDrawX(), m_Player->getDrawY(),
 				m_Player->getLookX(), m_Player->getLookY()
+			);
+			randerer->drawHP(
+				m_Player->getDrawX(), m_Player->getDrawY(),
+				m_Player->getFullHP(), m_Player->getNowHP()
 			);
 		}
 
 		if (o_Players.size() > 0) {
 			for (int i = 0; i < MAX_PLAYER - 1; ++i) {
-				randerer->drawPlayer(o_Players[i]->getDrawX(), o_Players[i]->getDrawY(), 1, 1, 1);
-				randerer->drawBulletWay(
+				randerer->drawPlayer(
+					o_Players[i]->getDrawX(), o_Players[i]->getDrawY(), 
+					1, 1, 1
+				);
+				randerer->drawO_BulletWay(
 					o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
 					o_Players[i]->getLookX(), o_Players[i]->getLookY()
+				);
+				randerer->drawHP(
+					o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
+					o_Players[i]->getFullHP(), o_Players[i]->getNowHP()
 				);
 			}
 		}
 		for (auto b : bullets) {
-			printf("%.5f\t%.5f\n", b->getDrawX(), b->getDrawY());
 			randerer->drawBullet(b->getDrawX(), b->getDrawY());
 		}
 	}
@@ -225,9 +239,11 @@ void SceneMgr::setBullets() {
 }
 
 void SceneMgr::shootBullet() {
-	m_Player->shootBullet();
+	if (m_Player != NULL)
+		m_Player->shootBullet();
 }
 
 void SceneMgr::stopBullet() {
-	m_Player->stopBullet();
+	if (m_Player != NULL)
+		m_Player->stopBullet();
 }

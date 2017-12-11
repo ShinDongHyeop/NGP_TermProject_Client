@@ -3,10 +3,13 @@
 #include <string>
 
 
-#define MAP_SIZE (2000 / 500)
-#define PLAYER_SIZE 10.0f
-#define BULLET_SIZE 3.0f
-#define BUSH_SIZE  42
+#define MAP_SIZE		(2000 / 500)
+#define PLAYER_SIZE		10.0f
+#define BULLET_SIZE		3.0f
+#define BUSH_SIZE		42
+#define HP_BAR_SIZE		60
+
+#define PI				(3.14f / 180.0f)
 
 class Randerer {
 public:
@@ -19,10 +22,11 @@ public:
 	}
 
 	void drawHP(float x, float y, float fullHP, float nowHP) {
+		float num = nowHP / fullHP * HP_BAR_SIZE;
 		glColor3f(0.0f, 0.0f, 0.0f);
-		glRectf(x - (fullHP / 2), y + 15, x + (fullHP / 2), y + 20);
+		glRectf(x - (HP_BAR_SIZE / 2), y + 15, x + (HP_BAR_SIZE / 2), y + 20);
 		glColor3f(1.0f, 0.0f, 0.0f);
-		glRectf(x - (fullHP / 2), y + 15, x - (fullHP / 2) + nowHP, y + 20);
+		glRectf(x - (HP_BAR_SIZE / 2), y + 15, x - (HP_BAR_SIZE / 2) + num, y + 20);
 	}
 
 	void drawBullet(float x, float y) {
@@ -75,6 +79,15 @@ public:
 		glEnd();
 	}
 
+	void drawO_BulletWay(float x, float y, float sx, float sy) {
+		glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
+		glBegin(GL_POLYGON);
+		glVertex2f(x + (5 * sy) + (10 * sx), y - (5 * sx) + (10 * sy));
+		glVertex2f(x + (30 * sx), y + (30 * sy));
+		glVertex2f(x - (5 * sy) + (10 * sx), y + (5 * sx) + (10 * sy));
+		glEnd();
+	}
+
 	void drawBush(float x, float y, float a) {
 		glPushMatrix();
 
@@ -89,4 +102,5 @@ public:
 
 		glPopMatrix();
 	}
+
 };
