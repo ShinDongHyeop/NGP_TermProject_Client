@@ -13,7 +13,7 @@ SceneMgr::SceneMgr(LPVOID sock) {
 	setsockopt(server_sock, IPPROTO_TCP, TCP_NODELAY, (char*)&opt_val, sizeof(int));
 
 	m_Player = NULL;
-	start_time = 5.0f;
+	start_time = respawn_time = 5.0f;
 }
 
 SceneMgr::~SceneMgr() {
@@ -88,18 +88,20 @@ void SceneMgr::draw() {
 
 			if (o_Players.size() > 0) {
 				for (int i = 0; i < MAX_PLAYER - 1; ++i) {
-					randerer->drawPlayer(
-						o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
-						1, 1, 1
-					);
-					randerer->drawO_BulletWay(
-						o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
-						o_Players[i]->getLookX(), o_Players[i]->getLookY()
-					);
-					randerer->drawHP(
-						o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
-						o_Players[i]->getFullHP(), o_Players[i]->getNowHP()
-					);
+					if (!o_Players[i]->hpZero()) {
+						randerer->drawPlayer(
+							o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
+							1, 1, 1
+						);
+						randerer->drawO_BulletWay(
+							o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
+							o_Players[i]->getLookX(), o_Players[i]->getLookY()
+						);
+						randerer->drawHP(
+							o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
+							o_Players[i]->getFullHP(), o_Players[i]->getNowHP()
+						);
+					}
 				}
 			}
 			for (auto b : bullets) {
@@ -107,10 +109,52 @@ void SceneMgr::draw() {
 			}
 		}
 		if (player_State == DIE) {
-
+			if (o_Players.size() > 0) {
+				for (int i = 0; i < MAX_PLAYER - 1; ++i) {
+					if (!o_Players[i]->hpZero()) {
+						randerer->drawPlayer(
+							o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
+							1, 1, 1
+						);
+						randerer->drawO_BulletWay(
+							o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
+							o_Players[i]->getLookX(), o_Players[i]->getLookY()
+						);
+						randerer->drawHP(
+							o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
+							o_Players[i]->getFullHP(), o_Players[i]->getNowHP()
+						);
+					}
+				}
+			}
+			for (auto b : bullets) {
+				randerer->drawBullet(b->getDrawX(), b->getDrawY());
+			}
 		}
 		if (player_State == RESPAWN) {
-
+			if (o_Players.size() > 0) {
+				for (int i = 0; i < MAX_PLAYER - 1; ++i) {
+					if (!o_Players[i]->hpZero()) {
+						randerer->drawPlayer(
+							o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
+							1, 1, 1
+						);
+						randerer->drawO_BulletWay(
+							o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
+							o_Players[i]->getLookX(), o_Players[i]->getLookY()
+						);
+						randerer->drawHP(
+							o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
+							o_Players[i]->getFullHP(), o_Players[i]->getNowHP()
+						);
+					}
+				}
+			}
+			for (auto b : bullets) {
+				randerer->drawBullet(b->getDrawX(), b->getDrawY());
+			}
+			int dec, sign;
+			randerer->printtext(250, 250, fcvt(respawn_time, 0, &dec, &sign));
 		}
 	}
 }
@@ -161,7 +205,6 @@ void SceneMgr::update() {
 				err_display("recv()");
 				break;
 			}
-			printf("%d\n", frame_time);
 			start_time -= ((float)frame_time / 1000.0f);
 			retval = send(server_sock, (char*)&start_time, sizeof(float), 0);
 			if (retval == SOCKET_ERROR) {
@@ -196,8 +239,57 @@ void SceneMgr::update() {
 			setBullets();
 			break;
 		case DIE:
+			respawn_time = 5.0f;
+			retval = recvn(server_sock, (char*)&playersBuf, PB_SIZE, 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("recv()");
+				break;
+			}
+			retval = recvn(server_sock, (char*)&bullet_count, sizeof(int), 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("recv()");
+				break;
+			}
+			retval = recvn(server_sock, (char*)&bulletsBuf, sizeof(BulletBuf)*bullet_count, 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("recv()");
+				break;
+			}
+
+			setPlayers();
+			setBullets();
 			break;
 		case RESPAWN:
+			retval = recv(server_sock, (char*)&frame_time, sizeof(int), 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("recv()");
+				break;
+			}
+			respawn_time -= ((float)frame_time / 1000.0f);
+			retval = send(server_sock, (char*)&respawn_time, sizeof(float), 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("send()");
+				break;
+			}
+
+			retval = recvn(server_sock, (char*)&playersBuf, PB_SIZE, 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("recv()");
+				break;
+			}
+			retval = recvn(server_sock, (char*)&bullet_count, sizeof(int), 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("recv()");
+				break;
+			}
+			retval = recvn(server_sock, (char*)&bulletsBuf, sizeof(BulletBuf)*bullet_count, 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("recv()");
+				break;
+			}
+
+			setPlayers();
+			setBullets();
 			break;
 		}
 		retval = recv(server_sock, (char*)&player_State, sizeof(int), 0);
@@ -212,11 +304,16 @@ void SceneMgr::update() {
 }
 
 void SceneMgr::keyboardFunc(int key, int state) {
-	if (key == KEYBOARD_R) {
-		if (player_State == WAIT)
-			player_State = READY;
-		else if (player_State == READY)
-			player_State = WAIT;
+	if (player_State == DIE) {
+		player_State = RESPAWN;
+	}
+	else {
+		if (key == KEYBOARD_R) {
+			if (player_State == WAIT)
+				player_State = READY;
+			else if (player_State == READY)
+				player_State = WAIT;
+		}
 	}
 }
 

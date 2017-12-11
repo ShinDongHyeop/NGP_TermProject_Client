@@ -46,7 +46,7 @@ class SceneMgr {
 	int retval;
 	int game_State = LOGIN;
 	int player_State = WAIT;
-	float start_time;
+	float start_time, respawn_time;
 public:
 	SceneMgr(LPVOID sock);
 

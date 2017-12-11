@@ -24,8 +24,9 @@ public:
 	float getLookY() { return look_Y; }
 	float getFullHP() { return full_HP; }
 	float getNowHP() { return now_HP; }
-	
 	float setXY(float realXY);
+
+	bool hpZero() { return now_HP <= 0; }
 
 	void change_move(int* state);
 	void setOtherLookXY(float lookX, float lookY);
