@@ -64,6 +64,11 @@ void Player::update(float realX, float realY, float lookX, float lookY, float hp
 	look_X = lookX;		look_Y = lookY;
 	draw_X = setXY(realX);
 	draw_Y = setXY(realY);
+
+	collBox[0] = realX - PLAYER_SIZE;		// left
+	collBox[1] = realX + PLAYER_SIZE;		// right
+	collBox[2] = realY - PLAYER_SIZE;		// bottom
+	collBox[3] = realY + PLAYER_SIZE;		// top
 }
 
 void Player::o_Update(float m_realX, float m_realY , float realX, float realY, float lookX, float lookY, float hp) {
@@ -74,4 +79,5 @@ void Player::o_Update(float m_realX, float m_realY , float realX, float realY, f
 	now_HP = hp;
 	draw_X = realX + drawX;
 	draw_Y = realY + drawY;
+		
 }

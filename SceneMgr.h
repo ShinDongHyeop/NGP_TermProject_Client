@@ -7,11 +7,14 @@
 #include "Buffer.h"
 #include "Player.h"
 #include "Bullet.h"
-
+#include "Bush.h"
+#include "Item.h"
+#include<stdlib.h>
 using namespace std;
 
 #define MAX_PLAYER		3
 #define MAX_BULLET		100
+#define MAX_ITEM		50
 #define PB_SIZE			(sizeof(PlayerBuf) * MAX_PLAYER)
 
 enum KeyboardState{KEYBOARD_A, KEYBOARD_S, KEYBOARD_D, KEYBOARD_W, KEYBOARD_R, KEYBOARD_F};
@@ -38,11 +41,15 @@ class SceneMgr {
 	SOCKET server_sock;
 	vector<Player*> o_Players;
 	vector<Bullet*> bullets;
+	vector<Item*> items;
+	vector<Bush*> bushs;
 	PlayerBuf playersBuf[3];
 	BulletBuf bulletsBuf[MAX_BULLET];
+	ItemBuf itemsBuf[MAX_ITEM];
 	ClientBuf cb;
 	int mMoveState[2]{};
 	int bullet_count;
+	int item_count;
 	int retval;
 	int game_State = LOGIN;
 	int player_State = WAIT;
@@ -56,6 +63,8 @@ public:
 	void draw();
 
 	void update();
+
+	void initBush();
 
 	void keyboardFunc(int key, int state);
 
@@ -78,6 +87,7 @@ public:
 
 	void setPlayers();
 	void setBullets();
+	void setItems();
 
 	void shootBullet();
 	void stopBullet();

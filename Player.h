@@ -1,3 +1,4 @@
+#define PLAYER_SIZE 10.0f
 
 enum ShootState {NO_SHOOT, SHOOT};
 
@@ -10,6 +11,7 @@ class Player {
 	float real_X, real_Y;
 	float draw_X, draw_Y;
 	float look_X, look_Y;
+	float collBox[4];
 public:
 	Player(float realX, float realY, float hp);
 	Player(float m_realX, float m_realY, float realX, float realY, float hp);
@@ -28,7 +30,7 @@ public:
 	float getFullHP() { return full_HP; }
 	float getNowHP() { return now_HP; }
 	float setXY(float realXY);
-
+	float* getCollBox() { return collBox; }
 	bool hpZero() { return now_HP <= 0; }
 
 	void change_move(int* state);

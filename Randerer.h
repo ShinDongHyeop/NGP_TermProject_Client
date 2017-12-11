@@ -8,7 +8,7 @@
 #define BULLET_SIZE		3.0f
 #define BUSH_SIZE		42
 #define HP_BAR_SIZE		60
-
+#define ITEM_SIZE       40
 #define PI				(3.14f / 180.0f)
 
 class Randerer {
@@ -36,6 +36,15 @@ public:
 			x + BULLET_SIZE, y + BULLET_SIZE
 		);
 	}
+
+	void drawItem(float x, float y) {
+		glColor3f(1.0f, 0.0f, 0.0f);
+		glRectf(
+			x - ITEM_SIZE, y - ITEM_SIZE,
+			x + ITEM_SIZE, y + ITEM_SIZE
+		);
+	}
+
 
 	void printtext(int x, int y, char* s)
 	{

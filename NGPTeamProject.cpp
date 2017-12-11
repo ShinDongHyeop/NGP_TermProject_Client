@@ -8,6 +8,7 @@
 #define FRAME_TIME (int)(1000 / 60)
 
 #define SERVERIP   "127.0.0.1"
+//#define SERVERIP   "192.168.143.209"
 #define SERVERPORT 5000
 #define BUFSIZE    50
 
@@ -50,7 +51,7 @@ void err_display(char *msg)
 
 int main(int argc, char* argv[]) {
 	int retval;
-
+	glutInit(&argc, argv);
 	WSADATA wsa;
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
 		return 1;
@@ -68,7 +69,7 @@ int main(int argc, char* argv[]) {
 	if (retval == SOCKET_ERROR) err_quit("connect()");
 
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA);
-	glutInitWindowPosition(100, 100);
+	glutInitWindowPosition(0, 0);
 	glutInitWindowSize(RIGHT, TOP);
 	glutCreateWindow("Example2");
 
