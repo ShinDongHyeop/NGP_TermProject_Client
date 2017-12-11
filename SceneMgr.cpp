@@ -9,7 +9,11 @@ SceneMgr::SceneMgr(LPVOID sock) {
 	if (retval == SOCKET_ERROR) {
 		err_display("recv()");
 	}
+	int opt_val = TRUE;
+	setsockopt(server_sock, IPPROTO_TCP, TCP_NODELAY, (char*)&opt_val, sizeof(int));
+
 	m_Player = NULL;
+	start_time = 5.0f;
 }
 
 SceneMgr::~SceneMgr() {
@@ -31,50 +35,90 @@ void SceneMgr::draw() {
 			randerer->printtext(220, 250, "READY");
 	}
 	if (game_State == RUNNING) {
-		if (m_Player != NULL) {
-			randerer->drawPlayer(
-				m_Player->getDrawX(), m_Player->getDrawY(),
-				1, 1, 1
-			);
-			randerer->drawBulletWay(
-				m_Player->getDrawX(), m_Player->getDrawY(),
-				m_Player->getLookX(), m_Player->getLookY()
-			);
-			randerer->drawHP(
-				m_Player->getDrawX(), m_Player->getDrawY(),
-				m_Player->getFullHP(), m_Player->getNowHP()
-			);
-		}
-
-		if (o_Players.size() > 0) {
-			for (int i = 0; i < MAX_PLAYER - 1; ++i) {
+		if (player_State == START) {
+			if (m_Player != NULL) {
 				randerer->drawPlayer(
-					o_Players[i]->getDrawX(), o_Players[i]->getDrawY(), 
+					m_Player->getDrawX(), m_Player->getDrawY(),
 					1, 1, 1
 				);
-				randerer->drawO_BulletWay(
-					o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
-					o_Players[i]->getLookX(), o_Players[i]->getLookY()
+				randerer->drawBulletWay(
+					m_Player->getDrawX(), m_Player->getDrawY(),
+					m_Player->getLookX(), m_Player->getLookY()
 				);
 				randerer->drawHP(
-					o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
-					o_Players[i]->getFullHP(), o_Players[i]->getNowHP()
+					m_Player->getDrawX(), m_Player->getDrawY(),
+					m_Player->getFullHP(), m_Player->getNowHP()
 				);
 			}
+
+			if (o_Players.size() > 0) {
+				for (int i = 0; i < MAX_PLAYER - 1; ++i) {
+					randerer->drawPlayer(
+						o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
+						1, 1, 1
+					);
+					randerer->drawO_BulletWay(
+						o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
+						o_Players[i]->getLookX(), o_Players[i]->getLookY()
+					);
+					randerer->drawHP(
+						o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
+						o_Players[i]->getFullHP(), o_Players[i]->getNowHP()
+					);
+				}
+			}
+			int dec, sign;
+			randerer->printtext(250, 250, fcvt(start_time, 0, &dec, &sign));
 		}
-		for (auto b : bullets) {
-			randerer->drawBullet(b->getDrawX(), b->getDrawY());
+		if (player_State == PLAY) {
+			if (m_Player != NULL) {
+				randerer->drawPlayer(
+					m_Player->getDrawX(), m_Player->getDrawY(),
+					1, 1, 1
+				);
+				randerer->drawBulletWay(
+					m_Player->getDrawX(), m_Player->getDrawY(),
+					m_Player->getLookX(), m_Player->getLookY()
+				);
+				randerer->drawHP(
+					m_Player->getDrawX(), m_Player->getDrawY(),
+					m_Player->getFullHP(), m_Player->getNowHP()
+				);
+			}
+
+			if (o_Players.size() > 0) {
+				for (int i = 0; i < MAX_PLAYER - 1; ++i) {
+					randerer->drawPlayer(
+						o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
+						1, 1, 1
+					);
+					randerer->drawO_BulletWay(
+						o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
+						o_Players[i]->getLookX(), o_Players[i]->getLookY()
+					);
+					randerer->drawHP(
+						o_Players[i]->getDrawX(), o_Players[i]->getDrawY(),
+						o_Players[i]->getFullHP(), o_Players[i]->getNowHP()
+					);
+				}
+			}
+			for (auto b : bullets) {
+				randerer->drawBullet(b->getDrawX(), b->getDrawY());
+			}
+		}
+		if (player_State == DIE) {
+
+		}
+		if (player_State == RESPAWN) {
+
 		}
 	}
 }
 
-void SceneMgr::update(int frame_time) {
+void SceneMgr::update() {
 	int retval; 
 	int state;
-	retval = send(server_sock, (char*)&frame_time, sizeof(int), 0);
-	if (retval == SOCKET_ERROR) {
-		err_display("recv()");
-	}
+	int frame_time;
 	retval = send(server_sock, (char*)&game_State, sizeof(int), 0);
 	if (retval == SOCKET_ERROR) {
 		err_display("recv()");
@@ -104,30 +148,63 @@ void SceneMgr::update(int frame_time) {
 		}
 		break;
 	case RUNNING:
-		setClientBuf();
-		retval = send(server_sock, (char*)&cb, sizeof(ClientBuf), 0);
+		retval = send(server_sock, (char*)&player_State, sizeof(int), 0);
 		if (retval == SOCKET_ERROR) {
 			err_display("send()");
 			break;
 		}
-		retval = recvn(server_sock, (char*)&playersBuf, PB_SIZE, 0);
-		if (retval == SOCKET_ERROR) {
-			err_display("recv()");
+		switch (player_State)
+		{
+		case START:
+			retval = recv(server_sock, (char*)&frame_time, sizeof(int), 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("recv()");
+				break;
+			}
+			printf("%d\n", frame_time);
+			start_time -= ((float)frame_time / 1000.0f);
+			retval = send(server_sock, (char*)&start_time, sizeof(float), 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("send()");
+				break;
+			}
 			break;
-		}
-		retval = recvn(server_sock, (char*)&bullet_count, sizeof(int), 0);
-		if (retval == SOCKET_ERROR) {
-			err_display("recv()");
-			break;
-		}
-		retval = recvn(server_sock, (char*)&bulletsBuf, sizeof(BulletBuf)*bullet_count, 0);
-		if (retval == SOCKET_ERROR) {
-			err_display("recv()");
-			break;
-		}
+		case PLAY:
+			setClientBuf();
+			retval = send(server_sock, (char*)&cb, sizeof(ClientBuf), 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("send()");
+				break;
+			}
+			retval = recvn(server_sock, (char*)&playersBuf, PB_SIZE, 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("recv()");
+				break;
+			}
+			retval = recvn(server_sock, (char*)&bullet_count, sizeof(int), 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("recv()");
+				break;
+			}
+			retval = recvn(server_sock, (char*)&bulletsBuf, sizeof(BulletBuf)*bullet_count, 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("recv()");
+				break;
+			}
 
-		setPlayers();
-		setBullets();
+			setPlayers();
+			setBullets();
+			break;
+		case DIE:
+			break;
+		case RESPAWN:
+			break;
+		}
+		retval = recv(server_sock, (char*)&player_State, sizeof(int), 0);
+		if (retval == SOCKET_ERROR) {
+			err_display("recv()");
+			break;
+		}
 		break;
 	case END:
 		break;
@@ -161,51 +238,53 @@ void SceneMgr::initPlayersData() {
 }
 
 void SceneMgr::changeMove(int key, int state) {
-	if (key == KEYBOARD_A) {
-		if (state == 1) {
-			if (mMoveState[0] == 0)
-				mMoveState[0] = -1;
-			else if (mMoveState[0] == 1)
-				mMoveState[0] = 0;
+	if (player_State == PLAY) {
+		if (key == KEYBOARD_A) {
+			if (state == 1) {
+				if (mMoveState[0] == 0)
+					mMoveState[0] = -1;
+				else if (mMoveState[0] == 1)
+					mMoveState[0] = 0;
+			}
+			else
+				mMoveState[0] -= state;
 		}
-		else
-			mMoveState[0] -= state;
-	}
 
-	if (key == KEYBOARD_D) {
-		if (state == 1) {
-			if (mMoveState[0] == 0)
-				mMoveState[0] = 1;
-			else if (mMoveState[0] == -1)
-				mMoveState[0] = 0;
+		if (key == KEYBOARD_D) {
+			if (state == 1) {
+				if (mMoveState[0] == 0)
+					mMoveState[0] = 1;
+				else if (mMoveState[0] == -1)
+					mMoveState[0] = 0;
+			}
+			else
+				mMoveState[0] += state;
 		}
-		else
-			mMoveState[0] += state;
-	}
 
-	if (key == KEYBOARD_W) {
-		if (state == 1) {
-			if (mMoveState[1] == 0)
-				mMoveState[1] = 1;
-			else if (mMoveState[1] == -1)
-				mMoveState[1] = 0;
+		if (key == KEYBOARD_W) {
+			if (state == 1) {
+				if (mMoveState[1] == 0)
+					mMoveState[1] = 1;
+				else if (mMoveState[1] == -1)
+					mMoveState[1] = 0;
+			}
+			else
+				mMoveState[1] += state;
 		}
-		else
-			mMoveState[1] += state;
-	}
 
-	if (key == KEYBOARD_S) {
-		if (state == 1) {
-			if (mMoveState[1] == 0)
-				mMoveState[1] = -1;
-			else if (mMoveState[1] == 1)
-				mMoveState[1] = 0;
+		if (key == KEYBOARD_S) {
+			if (state == 1) {
+				if (mMoveState[1] == 0)
+					mMoveState[1] = -1;
+				else if (mMoveState[1] == 1)
+					mMoveState[1] = 0;
+			}
+			else
+				mMoveState[1] -= state;
 		}
-		else
-			mMoveState[1] -= state;
+		if (m_Player != NULL)
+			m_Player->change_move(mMoveState);
 	}
-	if (m_Player != NULL)
-		m_Player->change_move(mMoveState);
 }
 
 void SceneMgr::setPlayers() {

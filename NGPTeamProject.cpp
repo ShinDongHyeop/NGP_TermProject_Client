@@ -13,9 +13,6 @@
 
 using namespace std;
 
-clock_t current_time = clock();
-clock_t frame_time;
-
 void draw(GLvoid);
 void Reshape(int w, int h);
 void Keyboard(unsigned char key, int x, int y);
@@ -88,12 +85,10 @@ int main(int argc, char* argv[]) {
 }
 
 void draw(GLvoid) {
-	frame_time = clock() - current_time;
-	current_time += frame_time;
 	glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	s->update((int)frame_time);
+	s->update();
 
 	glutPostRedisplay();
 

@@ -46,6 +46,7 @@ class SceneMgr {
 	int retval;
 	int game_State = LOGIN;
 	int player_State = WAIT;
+	float start_time;
 public:
 	SceneMgr(LPVOID sock);
 
@@ -53,7 +54,7 @@ public:
 
 	void draw();
 
-	void update(int frame_time);
+	void update();
 
 	void keyboardFunc(int key, int state);
 
