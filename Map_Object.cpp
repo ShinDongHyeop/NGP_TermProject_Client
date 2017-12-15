@@ -1,4 +1,4 @@
-#include "Map.h"
+#include "Map_Object.h"
 
 Map::Map(float pRealX, float pRealY) :
 	x(pRealX - 250), y(pRealY - 250) {}

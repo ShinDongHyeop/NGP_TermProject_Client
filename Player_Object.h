@@ -1,9 +1,5 @@
-#define PLAYER_SIZE 10.0f
-
-enum ShootState {NO_SHOOT, SHOOT};
-
 class Player {
-	int state;
+	int state, id;
 	int move_State[2]{};
 	int shoot_State;
 	int kill, death;
@@ -11,12 +7,13 @@ class Player {
 	float real_X, real_Y;
 	float draw_X, draw_Y;
 	float look_X, look_Y;
-	float collBox[4];
+	float coll_Box[4];
 public:
-	Player(float realX, float realY, float hp);
-	Player(float m_realX, float m_realY, float realX, float realY, float hp);
+	Player(int code, float realX, float realY, float hp);
+	Player(float m_realX, float m_realY, int code, float realX, float realY, float hp);
 
 	int getState() { return state; }
+	int getID() { return id; }
 	int* getMoveState() { return move_State; }
 	int getShootState() { return shoot_State; }
 	int getKill() { return kill; }
@@ -30,7 +27,8 @@ public:
 	float getFullHP() { return full_HP; }
 	float getNowHP() { return now_HP; }
 	float setXY(float realXY);
-	float* getCollBox() { return collBox; }
+	float* getCollBox() { return coll_Box; }
+
 	bool hpZero() { return now_HP <= 0; }
 
 	void change_move(int* state);
@@ -42,6 +40,6 @@ public:
 		kill = pKill;		death = pDeath;
 	}
 
-	void update(float realX, float realY, float lookX, float lookY, float hp);
+	void update(float realX, float realY, float hp);
 	void o_Update(float m_realX, float m_realY, float realX, float realY, float lookX, float lookY, float hp);
 };

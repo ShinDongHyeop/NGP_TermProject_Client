@@ -1,96 +1,60 @@
-#pragma comment(lib, "ws2_32")
-#include <winsock2.h>
-#include <vector>
-#include <time.h>
-#include "Randerer.h"
-#include "Map.h"
-#include "Buffer.h"
-#include "Player.h"
-#include "Bullet.h"
-#include "Bush.h"
-#include "Item.h"
-#include<stdlib.h>
-using namespace std;
-
-#define MAX_PLAYER		3
-#define MAX_BULLET		100
-#define MAX_ITEM		50
-#define PB_SIZE			(sizeof(PlayerBuf) * MAX_PLAYER)
-
-enum KeyboardState{KEYBOARD_A, KEYBOARD_S, KEYBOARD_D, KEYBOARD_W, KEYBOARD_R, KEYBOARD_F};
-enum GameState{LOGIN, RUNNING, END};
-enum PlayerState{WAIT, READY, START, PLAY, DIE, RESPAWN};
-enum KDState{ON, OFF};
-
-template<class Object1, class Object2>
-bool collision(Object1 object1, Object2 object2) {
-	float* collBox1 = object1->getCollBox();
-	float* collBox2 = object2->getCollBox();
-	if (collBox1[0] > collBox2[1])		return false;
-	if (collBox1[1] < collBox2[0])		return false;
-	if (collBox1[2] > collBox2[3])		return false;
-	if (collBox1[3] < collBox2[2])		return false;
-	return true;
-}
+#include "Player_Object.h"
+#include "Buffer_Object.h"
+#include "Bullet_Object.h"
+#include "Item_Object.h"
+#include "Bush_Object.h"
+#include "Map_Object.h"
+#include "Renderer.h"
+#include "support.h"
 
 class SceneMgr {
-	Randerer* randerer = NULL;
-	Player* m_Player = NULL;
-	int m_Player_Code;
-	Map* map = NULL;
 	SOCKET server_sock;
-	vector<Player*> o_Players;
-	vector<Bullet*> bullets;
-	vector<Item*> items;
-	vector<Bush*> bushs;
-	PlayerBuf playersBuf[3];
-	BulletBuf bulletsBuf[MAX_BULLET];
-	ItemBuf itemsBuf[MAX_ITEM];
-	ClientBuf cb;
-	int mMoveState[2]{};
-	int bullet_count;
-	int item_count;
+	Renderer* renderer;
+	Map* map;
+	Player* m_Player;
+	vector<unique_ptr<Player>> o_Players;
+	vector<unique_ptr<Bullet>> bullets;
+	vector<unique_ptr<Bush>> bushs;
+	vector<unique_ptr<Item>> items;
+	PlayerBuf players_Buf[MAX_PLAYER];
+	BulletBuf bullets_Buf[MAX_BULLET];
+	ClientBuf client_Buf;
+	ItemBuf items_Buf[MAX_ITEM];
+	int m_Player_Code;
+	int game_State;
+	int players_State[MAX_PLAYER];
+	int start_State;
+	int ready_State;
+	int killdeathUI;
 	int retval;
-	int game_State = LOGIN;
-	int player_State = WAIT;
-	float start_time, respawn_time;
-	bool killdeath_State = false;
+	clock_t frame_time;
+	int game_Start_time;
+	int respawn_time;
+	int restart_time;
+	int winner;
+	int m_Move_State[2];
+	int all_Count[2];
+	int room_owner;
 public:
 	SceneMgr(LPVOID sock);
-
 	~SceneMgr();
 
-	void draw();
-
-	void update();
-
+	bool idInPlayersCheck(int id);
 	void initBush();
-
-	void keyboardFunc(int key, int state);
-
-	void mouseMotion(int x, int y) {
-		if (m_Player != NULL)
-			m_Player->setMyLookXY(x, y);
-	}
-
-	void initPlayersData();
-	void changeMove(int key, int state);
-
-	void setClientBuf() {
-		int* state = m_Player->getMoveState();
-		cb.move_State[0] = state[0];
-		cb.move_State[1] = state[1];
-		cb.shoot_State = m_Player->getShootState();
-		cb.look_X = m_Player->getLookX();
-		cb.look_Y = m_Player->getLookY();
-	}
-
-	void setPlayers();
-	void setBullets();
-	void setItems();
-
+	void initPlayerData();
+	void initItemData();
+	void setPlayerData();
+	void setBulletData();
+	void setItemData();
+	void setClientBuf();
 	void shootBullet();
 	void stopBullet();
+
+	void draw();
+	void update();
+	void keyboardFunc(int key, int state);
+	void changeMove(int key, int state);
+	void mouseMotion(int x, int y);
 
 	void err_quit(char *msg)
 	{
@@ -135,4 +99,5 @@ public:
 
 		return (len - left);
 	}
+
 };

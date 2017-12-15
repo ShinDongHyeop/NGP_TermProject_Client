@@ -1,9 +1,7 @@
-#pragma once
-
-class Item {
+class Bullet {
 	float draw_X, draw_Y;
 public:
-	Item(float mapX, float mapY, float realX, float realY);
+	Bullet(float mapX, float mapY, float realX, float realY);
 
 	float getDrawX() { return draw_X; }
 	float getDrawY() { return draw_Y; }

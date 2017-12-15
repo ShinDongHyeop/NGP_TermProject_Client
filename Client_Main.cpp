@@ -1,53 +1,19 @@
-#include <time.h>
 #include "SceneMgr.h"
 
-#define LEFT 0
-#define RIGHT 500
-#define TOP 500
-#define BOTTOM 0
-#define FRAME_TIME (int)(1000 / 60)
-
-#define SERVERIP   "127.0.0.1"
-//#define SERVERIP   "192.168.143.209"
-#define SERVERPORT 5000
-#define BUFSIZE    50
-
-using namespace std;
+#define WIDTH		500
+#define HEGHIT		500
+#define SERVERIP	"127.0.0.1"
+#define SERVERPORT	5000
 
 void draw(GLvoid);
+void idle(void);
 void Reshape(int w, int h);
 void Keyboard(unsigned char key, int x, int y);
 void Keyboardup(unsigned char key, int x, int y);
 void Mouse(int button, int state, int x, int y);
 void Motion(int x, int y);
-//void Timerfunction(int value);
 
 SceneMgr* s;
-
-void err_quit(char *msg)
-{
-	LPVOID lpMsgBuf;
-	FormatMessage(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-		NULL, WSAGetLastError(),
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPTSTR)&lpMsgBuf, 0, NULL);
-	MessageBox(NULL, (LPCTSTR)lpMsgBuf, msg, MB_ICONERROR);
-	LocalFree(lpMsgBuf);
-	exit(1);
-}
-
-// 소켓 함수 오류 출력
-void err_display(char *msg)
-{
-	LPVOID lpMsgBuf;
-	FormatMessage(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-		NULL, WSAGetLastError(),
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPTSTR)&lpMsgBuf, 0, NULL);
-	LocalFree(lpMsgBuf);
-}
 
 int main(int argc, char* argv[]) {
 	int retval;
@@ -58,24 +24,30 @@ int main(int argc, char* argv[]) {
 
 	// socket()
 	SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (sock == INVALID_SOCKET) err_quit("socket()");
+	if (sock == INVALID_SOCKET) s->err_quit("socket()");
+	BOOL opt_val = TRUE;
+	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char*)&opt_val, sizeof(opt_val));
+	char serverip[15];
+	cout << "Server IP : ";
+	cin >> serverip;
 
 	SOCKADDR_IN serveraddr;
 	ZeroMemory(&serveraddr, sizeof(serveraddr));
 	serveraddr.sin_family = AF_INET;
-	serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
+	serveraddr.sin_addr.s_addr = inet_addr(serverip);
 	serveraddr.sin_port = htons(SERVERPORT);
 	retval = connect(sock, (SOCKADDR *)&serveraddr, sizeof(serveraddr));
-	if (retval == SOCKET_ERROR) err_quit("connect()");
+	if (retval == SOCKET_ERROR) s->err_quit("connect()");
 
-	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA);
-	glutInitWindowPosition(0, 0);
-	glutInitWindowSize(RIGHT, TOP);
+	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+	glutInitWindowPosition(100, 100);
+	glutInitWindowSize(WIDTH, HEGHIT);
 	glutCreateWindow("Example2");
 
 	s = new SceneMgr((LPVOID)sock);
 
 	glutDisplayFunc(draw);
+	glutIdleFunc(idle);
 	glutKeyboardFunc(Keyboard);
 	glutKeyboardUpFunc(Keyboardup);
 	glutMouseFunc(Mouse);
@@ -86,22 +58,24 @@ int main(int argc, char* argv[]) {
 }
 
 void draw(GLvoid) {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
 
 	s->update();
 
-	glutPostRedisplay();
-
 	s->draw();
 
-	glFlush();
+	glutSwapBuffers();
+}
+
+void idle(void) {
+	draw();
 }
 
 GLvoid Reshape(int w, int h)
 {
 	glViewport(0, 0, w, h);
-	glOrtho(LEFT, RIGHT, BOTTOM, TOP, -1, 1);
+	glOrtho(0, WIDTH, 0, HEGHIT, -1, 1);
 }
 
 
